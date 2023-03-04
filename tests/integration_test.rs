@@ -1,3 +1,4 @@
+use std::future;
 use std::net::SocketAddr;
 use std::time::Duration;
 
@@ -6,7 +7,7 @@ use axum::routing::get;
 use axum::Router;
 use reqwest::IntoUrl;
 use tokio::net::TcpListener;
-use tokio::{signal, time};
+use tokio::time;
 
 #[tokio::test]
 async fn test() {
@@ -40,12 +41,7 @@ async fn setup_test_server() -> impl IntoUrl {
 
     tokio::spawn(async move {
         let listener = TcpListener::bind(from_addr).await.unwrap();
-        tproxy::run(
-            listener,
-            to_addr,
-            signal::ctrl_c(), /* TODO: noop signal? */
-        )
-        .await
+        tproxy::run(listener, to_addr, future::pending::<()>()).await
     });
 
     time::sleep(Duration::from_secs(1)).await;
